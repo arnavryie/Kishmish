@@ -40,11 +40,6 @@
             cursor: default;
         }
 
-        /* Lock scrolling while password screen is active */
-        body.locked {
-            overflow: hidden;
-        }
-
         /* Custom Cursor */
         .cursor-trail {
             position: fixed;
@@ -53,7 +48,7 @@
             height: 10px;
             background: var(--deep-rose);
             border-radius: 50%;
-            z-index: 9999;
+            z-index: 99999;
             animation: fadeOut 1s forwards;
         }
 
@@ -91,9 +86,12 @@
             to { opacity: 0; transform: scale(0); }
         }
 
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
         }
 
         /* Utilities */
@@ -123,56 +121,80 @@
         /* ==================== 
            PASSWORD SCREEN 
            ==================== */
-        #password-screen {
+        #login-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100vh;
-            background: inherit; 
+            height: 100%;
+            background: linear-gradient(-45deg, #fff0f3, #ffe6eb);
+            z-index: 10000;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 99999;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            flex-direction: column;
+            transition: opacity 0.8s ease, visibility 0.8s;
         }
-        
-        .password-card {
+
+        .login-card {
             padding: 40px;
             text-align: center;
             width: 90%;
             max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
-        
-        .password-input {
+
+        .login-title {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--deep-rose);
+        }
+
+        .login-input {
             width: 100%;
             padding: 15px;
-            margin: 20px 0;
-            border: 2px solid var(--glass-border);
-            border-radius: 50px;
+            border: 2px solid var(--primary-pink);
+            border-radius: 10px;
+            margin-bottom: 15px;
             font-family: 'Poppins', sans-serif;
-            font-size: 1.1rem;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
             outline: none;
             transition: border-color 0.3s;
-            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.8);
         }
-        
-        .password-input:focus {
+
+        .login-input:focus {
             border-color: var(--deep-rose);
         }
 
-        #pwd-error {
-            color: var(--deep-rose);
+        .login-btn {
+            background: var(--deep-rose);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(230, 107, 126, 0.4);
+        }
+
+        .error-msg {
+            color: #d44d63;
+            margin-top: 10px;
             font-size: 0.9rem;
-            margin-top: 15px;
+            min-height: 20px;
             opacity: 0;
-            font-weight: 600;
             transition: opacity 0.3s;
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
         }
 
         /* ==================== 
@@ -265,8 +287,8 @@
             background: white;
             color: var(--text-main);
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            position: absolute; 
-            right: -140px; 
+            position: absolute; /* Allows movement */
+            right: -140px; /* Initial grid placement simulation */
         }
 
         /* ==================== 
@@ -327,7 +349,7 @@
             color: #555;
             font-style: italic;
             font-family: 'Playfair Display', serif;
-            min-height: 250px; 
+            min-height: 250px; /* Prevent layout shift */
         }
         
         .nickname-list {
@@ -498,15 +520,15 @@
         }
     </style>
 </head>
-<body class="locked">
+<body>
 
-    <div id="password-screen">
-        <div class="glass-card password-card">
-            <h2 class="hero-title" style="font-size: 2.5rem; margin-bottom: 10px;">For Sneha Only 💖</h2>
-            <p style="color: #777;">Enter the secret code to unlock your surprise!</p>
-            <input type="password" id="pwd-input" class="password-input" placeholder="Password..." />
-            <button class="btn-yes" onclick="checkPassword()" style="width: 100%;">Unlock 🔓</button>
-            <p id="pwd-error">Oops! Wrong password, try again! 🙈</p>
+    <div id="login-overlay">
+        <div class="glass-card login-card">
+            <h2 class="script-font login-title">Hello Sneha! 💖</h2>
+            <p style="margin-bottom: 20px; color: #666;">Enter the secret word to enter...</p>
+            <input type="password" id="passwordInput" class="login-input" placeholder="Secret Password...">
+            <button class="login-btn" onclick="checkPassword()">Unlock My Heart 🔓</button>
+            <p id="errorMsg" class="error-msg">Wrong password, Momo! 🙈</p>
         </div>
     </div>
 
@@ -620,40 +642,45 @@
     </main>
 
     <script>
-        // --- Password Logic ---
-        function checkPassword() {
-            const input = document.getElementById('pwd-input').value.toLowerCase(); // Makes it case-insensitive
-            const errorMsg = document.getElementById('pwd-error');
-            const screen = document.getElementById('password-screen');
-            
-            if (input === 'rasmalai2204') {
-                screen.style.opacity = '0';
-                screen.style.visibility = 'hidden';
-                document.body.classList.remove('locked');
-            } else {
-                errorMsg.style.opacity = '1';
-                setTimeout(() => { errorMsg.style.opacity = '0'; }, 2000);
-            }
-        }
-
-        // Allow Enter key to submit password
-        document.getElementById('pwd-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') checkPassword();
-        });
-
-
         // --- Configuration ---
-        // Date when you met: Sep 13, 2023 at 10:00 PM
-        // Month is 0-indexed (0=Jan, 8=Sep)
         const startDate = new Date(2023, 8, 13, 22, 0); 
+        const secretPass = "rasmalai2204"; // PASSWORD SET HERE
 
         // --- DOM Elements ---
+        const loginOverlay = document.getElementById('login-overlay');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorMsg = document.getElementById('errorMsg');
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
         const heroSection = document.getElementById('hero');
         const mainContent = document.getElementById('main-content');
         const music = document.getElementById('bg-music');
         const heartsContainer = document.getElementById('hearts-container');
+
+        // --- Password Logic ---
+        function checkPassword() {
+            const val = passwordInput.value.toLowerCase().trim();
+            if (val === secretPass) {
+                // Success
+                loginOverlay.style.opacity = '0';
+                loginOverlay.style.visibility = 'hidden';
+                // Optional: Start music on login if browser allows, otherwise wait for Yes button
+                // music.play().catch(() => {}); 
+            } else {
+                // Fail
+                errorMsg.style.opacity = '1';
+                const card = document.querySelector('.login-card');
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 500);
+            }
+        }
+
+        // Allow 'Enter' key to submit password
+        passwordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
 
         // --- Background Floating Hearts ---
         function createFloatingHearts() {
@@ -689,7 +716,104 @@
             const x = Math.random() * (window.innerWidth - noBtn.offsetWidth);
             const y = Math.random() * (window.innerHeight - noBtn.offsetHeight);
             
-            // If on mobile, keep it somewhat center-ish to avoid overflow
             noBtn.style.position = 'fixed';
             noBtn.style.left = x + 'px';
             noBtn.style.top = y + 'px';
+            
+            const rot = (Math.random() * 40) - 20;
+            noBtn.style.transform = `rotate(${rot}deg) scale(${1 - (clickCount * 0.1)})`;
+            
+            if (clickCount < noTexts.length) {
+                noBtn.innerText = noTexts[clickCount];
+            }
+            
+            const currentScale = 1 + (clickCount * 0.2);
+            yesBtn.style.transform = `scale(${currentScale})`;
+            yesBtn.style.boxShadow = `0 0 ${20 + clickCount * 5}px rgba(230, 107, 126, 0.6)`;
+
+            if (clickCount >= 7) {
+                noBtn.style.opacity = '0';
+                noBtn.style.pointerEvents = 'none';
+            }
+        }
+
+        // --- Yes Button Logic ---
+        function acceptProposal() {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#e66b7e', '#d4af37', '#ffffff']
+            });
+
+            music.volume = 0.5;
+            music.play().catch(e => console.log("Audio play failed"));
+
+            heroSection.style.transition = "opacity 1s ease";
+            heroSection.style.opacity = '0';
+            
+            setTimeout(() => {
+                heroSection.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                typeWriter();
+            }, 1000);
+        }
+
+        // --- Typewriter Effect ---
+        const loveMessage = "To my Mishkish... It started with a random click on Omegle at 10 PM, and turned into the most beautiful chapter of my life. From strangers to best friends, and now to soulmates. You brought so much light and laughter into my world. Thank you for choosing me, for loving me, and for being my favorite notification. I love you, Momo.";
+        
+        let i = 0;
+        function typeWriter() {
+            const textElement = document.getElementById("typewriter-text");
+            if (i < loveMessage.length) {
+                textElement.innerHTML += loveMessage.charAt(i);
+                i++;
+                setTimeout(typeWriter, 40);
+            }
+        }
+
+        // --- Scroll Animations ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // --- Counter Timer ---
+        function updateCounter() {
+            const now = new Date();
+            const diff = now - startDate;
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            document.getElementById('counter').innerText = 
+                `${days} Days, ${hours} Hours, ${minutes} Minutes, ${seconds} Seconds`;
+        }
+        setInterval(updateCounter, 1000);
+
+        // --- Cursor Trail ---
+        document.addEventListener('mousemove', function(e) {
+            const trail = document.createElement('div');
+            trail.className = 'cursor-trail';
+            trail.style.left = e.pageX + 'px';
+            trail.style.top = e.pageY + 'px';
+            document.body.appendChild(trail);
+
+            setTimeout(() => {
+                trail.remove();
+            }, 1000);
+        });
+
+    </script>
+</body>
+</html>
